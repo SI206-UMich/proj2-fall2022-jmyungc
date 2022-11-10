@@ -92,65 +92,65 @@ def get_listing_information(listing_id):
     filename = '%s.html' % name
     path = r"html_files/" + filename
     with open(path, "r") as fh:
-       soup = BeautifulSoup(fh, 'html.parser')
+        soup = BeautifulSoup(fh, 'html.parser')
  
-       information_list= []
+        information_list= []
     #finding policy number, adding it to information_list
-       number = soup.find('ul', class_='fhhmddr dir dir-ltr')
-       span = number.find('span')
-       policy_number = span.text
-       #regex for the policy numbers
-       pattern1 = re.compile(r'20\d{2}-00\d{4}STR')
-       pattern2 = re.compile(r'STR-000\d{4}')
-       #check to see if pending
-       if 'Pending' in policy_number or 'pending' in policy_number:
+        number = soup.find('ul', class_='fhhmddr dir dir-ltr')
+        span = number.find('span')
+        policy_number = span.text
+        #regex for the policy numbers
+        pattern1 = re.compile(r'20\d{2}-00\d{4}STR')
+        pattern2 = re.compile(r'STR-000\d{4}')
+        #check to see if pending
+        if 'Pending' in policy_number or 'pending' in policy_number:
            policy_number = "Pending"
-       #check to see if its actually a policy number
-       elif pattern1.search(policy_number) or pattern2.search(policy_number):
+        #check to see if its actually a policy number
+        elif pattern1.search(policy_number) or pattern2.search(policy_number):
            policy_number = policy_number
-       #otherwise it is exempt?
-       else:
+        #otherwise it is exempt?
+        else:
            policy_number = "Exempt"
       
-       information_list.append(policy_number)
-       #print (information_list)
+        information_list.append(policy_number)
+        #print (information_list)
  
-   #finding place type, adding it to information_list
+    #finding place type, adding it to information_list
  
-       type = soup.find('div', class_='_cv5qq4')
-       h2 = type.find('h2')
-       place_type = h2.text
+        type = soup.find('div', class_='_cv5qq4')
+        h2 = type.find('h2')
+        place_type = h2.text
       
-       #checking if its private
-       if 'Private' in place_type or 'private' in place_type:
+        #checking if its private
+        if 'Private' in place_type or 'private' in place_type:
            place_type = "Private Room"
-       #checking if its shared room
-       elif 'Shared' in place_type or 'shared' in place_type:
+        #checking if its shared room
+        elif 'Shared' in place_type or 'shared' in place_type:
            place_type = "Shared Room"
-       #checking if its entire room
-       else:
+        #checking if its entire room
+        else:
            place_type = "Entire Room"
  
-       information_list.append(place_type)
+        information_list.append(place_type)
       
-   #finding number of rooms
  
-       rooms = soup.find('ol', class_='lgx66tx dir dir-ltr')
-       ol = rooms.find_next('li').find_next('li')
-       li = ol.find_next('span').find_next('span').find_next('span')
+    #finding number of rooms
+ 
+        rooms = soup.find('ol', class_='lgx66tx dir dir-ltr')
+        ol = rooms.find_next('li').find_next('li')
+        li = ol.find_next('span').find_next('span').find_next('span')
      
-       room = (li.text)
+        room = (li.text)
   
-       if 'Studio' in room:
+        if 'Studio' in room:
            room_num = 1
-       else:
+        else:
            room_num = room[:1]
     
+        information_list.append(int(room_num))
+        # print (information_list)
  
-       information_list.append(int(room_num))
-       # print (information_list)
- 
-       info_tuple = tuple(information_list)
+        info_tuple = tuple(information_list)
  
     return info_tuple
 
@@ -202,7 +202,19 @@ def write_csv(data, filename):
 
     This function should not return anything.
     """
-    pass
+
+    with open (filename, 'w', newline = '') as new_file:
+        col_names = ["Listing Title", "Cost", "Listing ID", "Policy Number", "Place Type", "Number of Bedrooms"]
+        csv_writer = csv.writer(new_file)
+        csv_writer.writerow(col_names)
+
+        sorted_data = sorted(data, key = lambda x: x[1])
+
+        for item in sorted_data:
+            csv_writer.writerow([item[0],item[1],item[2],item[3],item[4],item[5]])
+    
+    return()
+            
 
 
 def check_policy_numbers(data):
@@ -329,27 +341,27 @@ class TestCases(unittest.TestCase):
 
         pass
 
-    # def test_write_csv(self):
-    #     # call get_detailed_listing_database on "html_files/mission_district_search_results.html"
-    #     # and save the result to a variable
-    #     detailed_database = get_detailed_listing_database("html_files/mission_district_search_results.html")
-    #     # call write csv on the variable you saved
-    #     write_csv(detailed_database, "test.csv")
-    #     # read in the csv that you wrote
-    #     csv_lines = []
-    #     with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'test.csv'), 'r') as f:
-    #         csv_reader = csv.reader(f)
-    #         for i in csv_reader:
-    #             csv_lines.append(i)
-    #     # check that there are 21 lines in the csv
-    #     self.assertEqual(len(csv_lines), 21)
-    #     # check that the header row is correct
+    def test_write_csv(self):
+        # call get_detailed_listing_database on "html_files/mission_district_search_results.html"
+        # and save the result to a variable
+        detailed_database = get_detailed_listing_database("html_files/mission_district_search_results.html")
+        # call write csv on the variable you saved
+        write_csv(detailed_database, "test.csv")
+        # read in the csv that you wrote
+        csv_lines = []
+        with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'test.csv'), 'r') as f:
+            csv_reader = csv.reader(f)
+            for i in csv_reader:
+                csv_lines.append(i)
+        # check that there are 21 lines in the csv
+        self.assertEqual(len(csv_lines), 21)
+        # check that the header row is correct
 
-    #     # check that the next row is Private room in Mission District,82,51027324,Pending,Private Room,1
+        # check that the next row is Private room in Mission District,82,51027324,Pending,Private Room,1
 
-    #     # check that the last row is Apartment in Mission District,399,28668414,Pending,Entire Room,2
+        # check that the last row is Apartment in Mission District,399,28668414,Pending,Entire Room,2
 
-    #     pass
+        pass
 
     # def test_check_policy_numbers(self):
     #     # call get_detailed_listing_database on "html_files/mission_district_search_results.html"
