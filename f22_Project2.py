@@ -25,7 +25,37 @@ def get_listings_from_search_results(html_file):
         ('Loft in Mission District', 210, '1944564'),  # example
     ]
     """
-    pass
+    with open(html_file, "r") as fh:
+        soup = BeautifulSoup(fh, 'html.parser')
+        
+    tuple_list = [] 
+    listing_names = []
+    cost_list = []
+    url_list = []
+
+    names = soup.find_all("div", class_="t1jojoys dir dir-ltr")
+    for name in names:
+        listing_names.append(name.get_text())
+
+    costs = soup.find_all("span", class_="_tyxjp1")
+    for cost in costs:
+        cost_list.append(cost.get_text().strip("$"))
+
+    urls = soup.find_all("a", class_="ln2bl2p dir dir-ltr")
+    for url in urls:
+        link = url.get("href").split("?")[0]
+        if((link.split("/")[2]) =="plus"):
+            link = link.split("/")[3]
+            url_list.append(link)
+        else:
+            link = link.split("/")[2]
+            url_list.append(link)
+
+    for i in range (len(listing_names)):
+        new_tup = (listing_names[i], int(cost_list[i]), url_list[i])
+        tuple_list.append(new_tup)
+
+    return tuple_list
 
 
 def get_listing_information(listing_id):
@@ -52,7 +82,71 @@ def get_listing_information(listing_id):
         number of bedrooms
     )
     """
-    pass
+    name = 'listing_' + listing_id
+    filename = '%s.html' % name
+    path = r"html_files/" + filename
+    with open(path, "r") as fh:
+       soup = BeautifulSoup(fh, 'html.parser')
+ 
+       information_list= []
+    #finding policy number, adding it to information_list
+       number = soup.find('ul', class_='fhhmddr dir dir-ltr')
+       span = number.find('span')
+       policy_number = span.text
+       #regex for the policy numbers
+       pattern1 = re.compile(r'20\d{2}-00\d{4}STR')
+       pattern2 = re.compile(r'STR-000\d{4}')
+       #check to see if pending
+       if 'Pending' in policy_number or 'pending' in policy_number:
+           policy_number = "Pending"
+       #check to see if its actually a policy number
+       elif pattern1.search(policy_number) or pattern2.search(policy_number):
+           policy_number = policy_number
+       #otherwise it is exempt?
+       else:
+           policy_number = "Exempt"
+      
+       information_list.append(policy_number)
+       #print (information_list)
+ 
+   #finding place type, adding it to information_list
+ 
+       type = soup.find('div', class_='_cv5qq4')
+       h2 = type.find('h2')
+       place_type = h2.text
+      
+       #checking if its private
+       if 'Private' in place_type or 'private' in place_type:
+           place_type = "Private Room"
+       #checking if its shared room
+       elif 'Shared' in place_type or 'shared' in place_type:
+           place_type = "Shared Room"
+       #checking if its entire room
+       else:
+           place_type = "Entire Room"
+ 
+       information_list.append(place_type)
+      
+   #finding number of rooms
+ 
+       rooms = soup.find('ol', class_='lgx66tx dir dir-ltr')
+       ol = rooms.find_next('li').find_next('li')
+       li = ol.find_next('span').find_next('span').find_next('span')
+     
+       room = (li.text)
+  
+       if 'Studio' in room:
+           room_num = 1
+       else:
+           room_num = room[:1]
+    
+ 
+       information_list.append(int(room_num))
+       # print (information_list)
+ 
+       info_tuple = tuple(information_list)
+ 
+    return info_tuple
 
 
 def get_detailed_listing_database(html_file):
@@ -69,7 +163,15 @@ def get_detailed_listing_database(html_file):
         ...
     ]
     """
-    pass
+    tuple_info = get_listings_from_search_results(html_file)
+    result = []
+    for tup in tuple_info:
+        listing_id = tup[2]
+        place = get_listing_information(listing_id)
+        place_info = tup + place
+        result.append(place_info)
+    return (result)
+
 
 
 def write_csv(data, filename):
@@ -147,8 +249,10 @@ class TestCases(unittest.TestCase):
         # check that the variable you saved after calling the function is a list
         self.assertEqual(type(listings), list)
         # check that each item in the list is a tuple
-
+        for tup in listings:
+            self.assertEqual(type(tup), tuple)
         # check that the first title, cost, and listing id tuple is correct (open the search results html and find it)
+            self.assertEqual(("first title","cost","id"), )
 
         # check that the last title is correct (open the search results html and find it)
         pass
